@@ -1,8 +1,40 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import axios from 'axios'
+// import browser from 'webextension-polyfill'
 
-import browser from 'webextension-polyfill'
+const title = ref('')
+const number = ref('')
+const state = ref('')
 
+// 스토리지에 값이 없다,,,,,
+// browser.storage.session.get().then((item) => {
+//   console.log('스토리지 값', item)
+//
+//   title.value = item.title
+//   number.value = item.number
+//   state.value = item.state
+// })
+//   .catch((error) => {
+//     console.log(`Error: ${error}`)
+//   })
+
+// browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.type === 'sendDataToPopup') {
+//     // eslint-disable-next-line no-console
+//     console.log('1', message.data.popupData)
+//     console.log('2', message.data.data)
+//     console.log('3', message.data)
+//     title.value = message.data.title
+//     number.value = message.data.problemId
+//     state.value = message.data.result_message
+//
+//     if (message.data) {
+//       console.log('popup에 도착:', message.data)
+//       sendResponse('data match!!')
+//     }
+//   }
+// })
 const memo = ref('')
 const isRef = ref(false)
 
@@ -10,32 +42,38 @@ function onSave() {
   // const algorithmnData = {
   //   memo: memo.value,
   //   isRef: isRef.value,
-  // };
-  //
-  // const algorithmnData = {
-  //   problemNumber: 0,
-  //   problemTitle: 'test',
-  //   problemDifficulty: 'Lv1',
-  //   problemPlatform: 'baekjoon',
-  //   problemState: 'correct',
-  //   algorithmName: ['DP', 'BFS'],
-  //   codeContent: 'testest',
-  //   codeCorrect: isRef.value,
-  //   codeTime: '123',
-  //   codeMemory: '123',
-  //   memo: memo.value,
   // }
 
-  // const baseUrl = '/api/v1'
+  const algorithmnData = {
+    problemNumber: 0,
+    problemTitle: 'test',
+    problemDifficulty: 'Lv1',
+    problemPlatform: 'baekjoon',
+    problemState: 'correct',
+    algorithmName: ['DP', 'BFS'],
+    codeContent: 'testest',
+    codeCorrect: isRef.value,
+    codeTime: '123',
+    codeMemory: '123',
+    memo: memo.value,
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(algorithmnData)
+
+  const baseUrl = 'http://localhost:8080/api/v1'
   // post 요청
-  // console.log(algorithmnData)
-  // axios.post(`${baseUrl}/problems/submit`, algorithmnData)
-  //   .then((response: AxiosResponse) => {
-  //     console.log(response)
-  //   })
-  //   .catch((error: Error) => {
-  //     console.log(error)
-  //   })
+  // eslint-disable-next-line no-console
+  console.log(algorithmnData)
+  axios.post(`${baseUrl}/problems/submit`, algorithmnData)
+    .then((response) => {
+      // eslint-disable-next-line no-console
+      console.log(response)
+    })
+    .catch((error: Error) => {
+      // eslint-disable-next-line no-console
+      console.log(error)
+    })
 }
 function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
@@ -54,32 +92,6 @@ function openMainPage() {
 //   }
 //   return {};
 // }
-async function fetchProblemDescriptionById(problemId: number) {
-  return fetch(`https://www.acmicpc.net/problem/${problemId}`)
-    .then(res => res.text())
-    .then((html) => {
-      const doc = new DOMParser().parseFromString(html, 'text/html')
-      // console.log(doc)
-      return (doc)
-    })
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-    const tab = tabs[0]
-    // console.log(tab)
-    if (tab && tab.id) {
-      // console.log('tabId', tab.id)
-      // Change the problemId value to the appropriate problem ID
-      fetchProblemDescriptionById(17828).then(() => {
-      //   // Do something with the fetched problem description
-      //   // console.log('doc:', doc)
-      // }).catch((error) => {
-      //   console.error('Error fetching problem description:', error)
-      })
-    }
-  })
-})
 </script>
 
 <template>
@@ -94,12 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="mt-[12px] mb-[12px] w-[100%] border-t-[1.5px] border-[#EEEEEE] border-solid" />
     <div class="m-[0_0_12px_0] flex flex-row justify-between w-[100%] box-sizing-border">
       <div class="inline-block break-words font-semibold text-[12px] text-[#00992B]">
-        27297. 맨해튼에서의 모임
+        {{ number }}.{{ title }}
       </div>
       <div
         class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center p-[2px_3px] box-sizing-border"
       >
-        <span class="break-words font-semibold text-[10px] text-[#00992B]"> 맞았습니다 </span>
+        <span class="break-words font-semibold text-[10px] text-[#00992B]"> {{ state }} </span>
       </div>
     </div>
     <textarea

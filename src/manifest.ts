@@ -1,7 +1,7 @@
 import fs from 'fs-extra'
 import type { Manifest } from 'webextension-polyfill'
 import type PkgType from '../package.json'
-import { isDev, isFirefox, port, r } from '../scripts/utils'
+import { isDev, port, r } from '../scripts/utils'
 
 export async function getManifest() {
   const pkg = await fs.readJSON(r('package.json')) as typeof PkgType
@@ -21,14 +21,9 @@ export async function getManifest() {
       page: './dist/options/index.html',
       open_in_tab: true,
     },
-    background: isFirefox
-      ? {
-          scripts: ['dist/background/index.mjs'],
-          type: 'module',
-        }
-      : {
-          service_worker: './dist/background/index.mjs',
-        },
+    background: {
+      service_worker: './dist/background/index.mjs',
+    },
     icons: {
       16: './assets/icon-512.png',
       48: './assets/icon-512.png',
@@ -37,17 +32,27 @@ export async function getManifest() {
     permissions: [
       'tabs',
       'storage',
+      'scripting',
       'activeTab',
     ],
     host_permissions: ['*://*/*'],
     content_scripts: [
+      // {
+      //   matches: [
+      //     '<all_urls>',
+      //   ],
+      //   js: [
+      //     'dist/contentScripts/index.ts',
+      //   ],
+      // },
       {
         matches: [
-          '<all_urls>',
+          'https://school.programmers.co.kr/*',
         ],
         js: [
           'dist/contentScripts/index.global.js',
         ],
+        run_at: 'document_idle',
       },
     ],
     web_accessible_resources: [
@@ -59,19 +64,9 @@ export async function getManifest() {
     content_security_policy: {
       extension_pages: isDev
         // this is required on dev for Vite script to load
-        ? `script-src \'self\' http://localhost:${port}; object-src \'self\'`
+        ? `script-src 'self' http://localhost:${port}; object-src 'self'`
         : 'script-src \'self\'; object-src \'self\'',
     },
   }
-
-  // FIXME: not work in MV3
-  if (isDev && false) {
-    // for content script, as browsers will cache them for each reload,
-    // we use a background script to always inject the latest version
-    // see src/background/contentScriptHMR.ts
-    delete manifest.content_scripts
-    manifest.permissions?.push('webNavigation')
-  }
-
   return manifest
 }

@@ -14,6 +14,7 @@ import { setupApp } from '~/logic/common-setup'
   })
 
   // mount component to context window
+  // 화면 하단에 floating button 설정인듯?
   const container = document.createElement('div')
   container.id = __NAME__
   const root = document.createElement('div')
