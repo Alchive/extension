@@ -226,12 +226,12 @@ async function parseData() {
   const title = document.querySelector('.algorithm-title .challenge-title').textContent.replace(/\\n/g, '').trim()
   const problem_description = document.querySelector('div.guide-section-description > div.markdown').innerHTML
   const language_extension = document.querySelector('div.editor > ul > li.nav-item > a').innerText.split('.')[1]
-  const code = document.querySelector('textarea#code').value
+  const code = document.querySelector('textarea#code').value || ''
   const result_message
       = [...document.querySelectorAll('#output .console-message')]
         .map(node => node.textContent)
         .filter(text => text.includes(':'))
-        .reduce((cur, next) => (cur ? `${cur}<br/>${next}` : next), '') || 'Empty'
+        .reduce((cur, next) => (cur ? `${cur},${next}` : next), '') || 'Empty'
   const [runtime, memory] = [...document.querySelectorAll('td.result.passed')]
     .map(x => x.innerText)
     .map(x => x.replace(/[^., 0-9a-zA-Z]/g, '').trim())
@@ -252,6 +252,10 @@ async function makeData(origin) {
   const message = `[${levelWithLv}] Title: ${title}, Time: ${runtime}, Memory: ${memory} -BaekjoonHub`
   // const fileName = `${convertSingleCharToDoubleChar(title)}.${language_extension}`
   const dateInfo = getDateString(new Date(Date.now()))
+
+  const startIndex = result_message.indexOf('합계: ') + 4
+  const endIndex = result_message.indexOf(' /')
+  const score = result_message.substring(startIndex, endIndex)
   // prettier-ignore
   const readme
       = `# [${levelWithLv}] ${title} - ${problemId} \n\n`
@@ -270,7 +274,7 @@ async function makeData(origin) {
       + `> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges`
   // console.log(readme)
   // console.log('makeData', levelWithLv, message)
-  return { title, problemId, levelWithLv, result_message, dateInfo, code }
+  return { title, problemId, levelWithLv, score, dateInfo, code }
 }
 
 function sendDataToBackground(data) {

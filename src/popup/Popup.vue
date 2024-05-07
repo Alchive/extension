@@ -1,30 +1,45 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
-// import browser from 'webextension-polyfill'
+import browser from 'webextension-polyfill'
 
 const title = ref('')
 const number = ref('')
 const state = ref('')
 
-// 스토리지에 값이 없다,,,,,
-// browser.storage.session.get().then((item) => {
-//   console.log('스토리지 값', item)
-//
-//   title.value = item.title
-//   number.value = item.number
-//   state.value = item.state
-// })
-//   .catch((error) => {
-//     console.log(`Error: ${error}`)
-//   })
+browser.storage.local.get().then((item) => {
+  console.log('스토리지 값', item.popupData)
 
+  title.value = item.popupData.title
+  number.value = item.popupData.number
+  state.value = item.popupData.state
+
+  if(state.value === '0.0'){
+    state.value = ' 틀렸습니다 '
+  }
+  else if(state.value === '100.0'){
+    state.value = ' 맞았습니다 '
+  }
+})
+  .catch((error) => {
+    console.log(`Error: ${error}`)
+  })
+
+// browser.storage.local.get(['title', 'number', 'state'])
+//     .then((result) => {
+//       title.value = result.title || ''
+//       number.value = result.number || ''
+//       state.value = result.state || ''
+//     })
+//     .catch((error) => {
+//       console.error('스토리지에서 값 가져오는 중 오류 발생:', error)
+//     })
+
+console.log('storage 값', title, number, state)
+
+// popup <-> background 통신 실패코드
 // browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 //   if (message.type === 'sendDataToPopup') {
-//     // eslint-disable-next-line no-console
-//     console.log('1', message.data.popupData)
-//     console.log('2', message.data.data)
-//     console.log('3', message.data)
 //     title.value = message.data.title
 //     number.value = message.data.problemId
 //     state.value = message.data.result_message
@@ -39,11 +54,6 @@ const memo = ref('')
 const isRef = ref(false)
 
 function onSave() {
-  // const algorithmnData = {
-  //   memo: memo.value,
-  //   isRef: isRef.value,
-  // }
-
   const algorithmnData = {
     problemNumber: 0,
     problemTitle: 'test',
@@ -79,19 +89,6 @@ function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
 }
 
-// function parseProblemDescription(doc = document) {
-//   convertImageTagAbsoluteURL(doc.getElementById('problem_description')); //이미지에 상대 경로가 있을 수 있으므로 이미지 경로를 절대 경로로 전환 합니다.
-//   const problemId = doc.getElementsByTagName('title')[0].textContent.split(':')[0].replace(/[^0-9]/, '');
-//   const problem_description = unescapeHtml(doc.getElementById('problem_description').innerHTML.trim());
-//   const problem_input = doc.getElementById('problem_input')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
-//   const problem_output = doc.getElementById('problem_output')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
-//   if (problemId && problem_description) {
-//     log(`문제번호 ${problemId}의 내용을 저장합니다.`);
-//     updateProblemsFromStats({ problemId, problem_description, problem_input, problem_output});
-//     return { problemId, problem_description, problem_input, problem_output};
-//   }
-//   return {};
-// }
 </script>
 
 <template>
@@ -106,7 +103,7 @@ function openMainPage() {
     <div class="mt-[12px] mb-[12px] w-[100%] border-t-[1.5px] border-[#EEEEEE] border-solid" />
     <div class="m-[0_0_12px_0] flex flex-row justify-between w-[100%] box-sizing-border">
       <div class="inline-block break-words font-semibold text-[12px] text-[#00992B]">
-        {{ number }}.{{ title }}
+        {{ number }}. {{ title }}
       </div>
       <div
         class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center p-[2px_3px] box-sizing-border"

@@ -1,11 +1,6 @@
-// import browser from 'webextension-polyfill'
+import browser from 'webextension-polyfill'
 // import { onMessage } from 'webext-bridge/background'
-
 // only on dev mode
-
-// import { useWebExtensionStorage } from '~/composables/useWebExtensionStorage'
-
-// export const storageDemo = useWebExtensionStorage('test', 'test')
 
 if (import.meta.hot) {
   // @ts-expect-error for background HMR
@@ -13,8 +8,12 @@ if (import.meta.hot) {
   // load latest content script
   // import('./contentScriptHMR')
 }
-// 서버로 API요청
-// 데이터 popup에 보여주는
+
+browser.runtime.onInstalled.addListener((): void => {
+  // eslint-disable-next-line no-console
+  console.log('Extension installed')
+})
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'openPopup') {
     // console.log('메세지 받음')
@@ -27,40 +26,36 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       top: 100,
       left: 1300,
     })
-    // browser.windows.create({ url: '../dist/popup/index.html', type: 'popup', width: 300, height: 300, left: 100, top: 100 })
   }
   else if (message.type === 'sendProblemData') {
     // eslint-disable-next-line no-console
     console.log('sendProblemData 받음', message.data)
-    // title, number,state 스토리지에 저장
-    // const popupData = {
-    //   title: message.data.title,
-    //   number: message.data.problemId,
-    //   state: message.data.result_message,
-    // }
-    // // popup페이지에서 데이터들을 동적으로 나태내려면 store저장하거나 message로 data 주고 받아야
-    // browser.storage.session.set({ popupData }).then(() => {
-    //   console.log('OK')
-    //   // ok는 출력되는데 스토리지에 저장이 안됨,,, 데이터도 있는거 확인했는데,,,, 왜지?
-    // })
-    //   .catch((error) => {
-    //     console.log(error)
-    //   })
-    // 피니아로 전역데이터로 저장하고 팝업창 띄움
-    // sessionStorage.setItem('title', message.data.title)
-    // sessionStorage.setItem('number', message.data.problemId)
-    // sessionStorage.setItem('state', message.data.result_message)
-    //
-    // if (data) {
-    //   browser.windows.create({
-    //     url: '../dist/popup/index.html',
-    //     type: 'popup',
-    //     height: 290,
-    //     width: 300,
-    //     top: 100,
-    //     left: 1300,
-    //   })
-    // }
+
+    const popupData = {
+      title: message.data.title,
+      number: message.data.problemId,
+      state: message.data.score,
+    }
+
+    // popup페이지에서 데이터들을 동적으로 나태내기위해 저장
+    browser.storage.local.set({ popupData }).then(() => {
+      console.log('OK', popupData)
+    })
+      .catch((error) => {
+        console.log(error)
+      })
+
+    // 데이터 저장 후 팝업 창 띄움
+    if (popupData) {
+      browser.windows.create({
+        url: '../dist/popup/index.html',
+        type: 'popup',
+        height: 280,
+        width: 300,
+        top: 100,
+        left: 1300,
+      })
+    }
   }
   sendResponse()
 })
@@ -113,17 +108,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 //     }
 //   })
 // })
-
-browser.runtime.onInstalled.addListener((): void => {
-  // eslint-disable-next-line no-console
-  console.log('Extension installed')
-  browser.storage.session.set({ test: 'test' }).then(() => {
-    // eslint-disable-next-line no-console
-    console.log('OK1')
-    // ok는 출력되는데 스토리지에 저장이 안됨,,, 데이터도 있는거 확인했는데,,,, 왜지?
-    // 일단.. 부캠코드 참고해서 popup <-> background랑 통신하는 로직을 한번 보고,, storage도 있ㄱ음 보고,,
-  })
-})
 
 // let previousTabId = 0
 
