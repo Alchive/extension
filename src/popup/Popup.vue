@@ -6,6 +6,7 @@ import browser from 'webextension-polyfill'
 const title = ref('')
 const number = ref('')
 const state = ref('')
+const color = ref('#000000')
 
 browser.storage.local.get().then((item) => {
   console.log('스토리지 값', item.popupData)
@@ -16,9 +17,11 @@ browser.storage.local.get().then((item) => {
 
   if(state.value === '0.0'){
     state.value = ' 틀렸습니다 '
+    color.value = '#ff0000'
   }
   else if(state.value === '100.0'){
     state.value = ' 맞았습니다 '
+    color.value = '#00992B'
   }
 })
   .catch((error) => {
@@ -102,13 +105,13 @@ function openMainPage() {
     </div>
     <div class="mt-[12px] mb-[12px] w-[100%] border-t-[1.5px] border-[#EEEEEE] border-solid" />
     <div class="m-[0_0_12px_0] flex flex-row justify-between w-[100%] box-sizing-border">
-      <div class="inline-block break-words font-semibold text-[12px] text-[#00992B]">
+      <div class="inline-block break-words font-semibold text-[12px]" :style="{ color: color }">
         {{ number }}. {{ title }}
       </div>
       <div
         class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center p-[2px_3px] box-sizing-border"
       >
-        <span class="break-words font-semibold text-[10px] text-[#00992B]"> {{ state }} </span>
+        <span class="break-words font-semibold text-[10px] " :style="{ color: color }"> {{ state }} </span>
       </div>
     </div>
     <textarea

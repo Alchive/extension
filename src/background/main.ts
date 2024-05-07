@@ -16,16 +16,16 @@ browser.runtime.onInstalled.addListener((): void => {
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'openPopup') {
-    // console.log('메세지 받음')
+    console.log('메세지 받음')
     // 지금은 이렇게 페이지가 열리지만 나중에는 option.html활용해서 플로팅버튼 누르는 이벤트 발생시켜서 저장페이지 띄워지도록..?
-    browser.windows.create({
-      url: '../dist/popup/index.html',
-      type: 'popup',
-      height: 290,
-      width: 300,
-      top: 100,
-      left: 1300,
-    })
+    // browser.windows.create({
+    //   url: '../dist/popup/index.html',
+    //   type: 'popup',
+    //   height: 290,
+    //   width: 300,
+    //   top: 100,
+    //   left: 1300,
+    // })
   }
   else if (message.type === 'sendProblemData') {
     // eslint-disable-next-line no-console
@@ -44,15 +44,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((error) => {
         console.log(error)
       })
-
     // 데이터 저장 후 팝업 창 띄움
     if (popupData) {
       browser.windows.create({
         url: '../dist/popup/index.html',
         type: 'popup',
-        height: 280,
+        height: 285,
         width: 300,
-        top: 100,
+        top: 75,
         left: 1300,
       })
     }

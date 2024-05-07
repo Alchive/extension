@@ -50,20 +50,19 @@ function startLoader() {
     //   stopLoader()
     // }
     // 제출 후 채점하기 결과가 성공적으로 나왔다면 코드를 파싱하고, 업로드를 시작한다
-    if (getSolvedResult().includes('정답')) {
-      console.log('문제를 풀이했습니다.')
-      stopLoader()
-      try {
-        const bojData = await parseData()
-        console.log('데이터 추출', bojData)
-        // await beginUpload(bojData)
-      }
-      catch (error) {
-        console.log(error)
-      }
-    }
-    else if (getSolvedResult().includes('틀렸')) {
-      console.log('틀린 문제.')
+    // if (getSolvedResult().includes('정답')) {
+    //   console.log('문제를 풀이했습니다.')
+    //   stopLoader()
+    //   try {
+    //     const bojData = await parseData()
+    //     console.log('데이터 추출', bojData)
+    //     // await beginUpload(bojData)
+    //   }
+    //   catch (error) {
+    //     console.log(error)
+    //   }
+    // }
+    if (getSolvedResult()) {
       stopLoader()
       try {
         const bojData = await parseData()
@@ -272,28 +271,13 @@ async function makeData(origin) {
       + `### 문제 설명\n\n`
       + `${problem_description}\n\n`
       + `> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges`
-  // console.log(readme)
-  // console.log('makeData', levelWithLv, message)
   return { title, problemId, levelWithLv, score, dateInfo, code }
 }
 
 function sendDataToBackground(data) {
   browser.runtime.sendMessage({ type: 'sendProblemData', data }).then((message) => {
     console.log('sendDataToBackground 응답:', message)
-    browser.runtime.sendMessage({ type: 'openPopup' })
   }).catch((error) => {
     console.error('Error sending message:', error)
   })
 }
-
-// function sendDataToPopup(data) {
-//   const response = browser.runtime.sendMessage({ type: 'sendDataToPopup', data })
-//   response.then((message) => {
-//     console.log('message from popup', message)
-//     browser.runtime.sendMessage('openPopup')
-//   }).catch((error) => {
-//     console.error('Error sending message:', error)
-//   })
-// }
-// 저장한 데이터들을 서버로 보내는 로직
-// 제목, 상태를 popup 띄우는 로직 content로 보내서 popup에 보여지게?
