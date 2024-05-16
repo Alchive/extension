@@ -2,11 +2,17 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import browser from 'webextension-polyfill'
-
+import {Problem, MetaData} from "~/types/problemData";
+const memo = ref('')
+const isRef = ref(false)
 const title = ref('')
 const number = ref('')
 const state = ref('')
+const isCorrect = ref(false)
 const color = ref('#000000')
+let metaData:MetaData | null = null; // 전역 변수로 선언
+let platform:string = ''
+
 
 browser.storage.local.get().then((item) => {
   console.log('스토리지 값', item.popupData)
@@ -15,16 +21,17 @@ browser.storage.local.get().then((item) => {
   number.value = item.popupData.number
   state.value = item.popupData.state
 
-  if(state.value === '0.0'){
+  if(parseInt(state.value) <= 100){
     state.value = ' 틀렸습니다 '
+    isCorrect.value = false
     color.value = '#ff0000'
   }
   else if(state.value === '100.0'){
     state.value = ' 맞았습니다 '
+    isCorrect.value = true
     color.value = '#00992B'
   }
-})
-  .catch((error) => {
+}).catch((error) => {
     console.log(`Error: ${error}`)
   })
 
@@ -38,55 +45,66 @@ browser.storage.local.get().then((item) => {
 //       console.error('스토리지에서 값 가져오는 중 오류 발생:', error)
 //     })
 
-console.log('storage 값', title, number, state)
-
-// popup <-> background 통신 실패코드
-// browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//   if (message.type === 'sendDataToPopup') {
-//     title.value = message.data.title
-//     number.value = message.data.problemId
-//     state.value = message.data.result_message
-//
-//     if (message.data) {
+// document.addEventListener('DOMContentLoaded', function() {
+//   // 팝업이 로드된 후에 메시지를 수신하는 이벤트 핸들러를 설정합니다.
+//   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (message.type === 'sendPopup') {
 //       console.log('popup에 도착:', message.data)
-//       sendResponse('data match!!')
+//       // 팝업으로부터 받은 데이터 처리
+//       sendResponse('data match!')
 //     }
-//   }
-// })
-const memo = ref('')
-const isRef = ref(false)
+//   });
+// });
 
-function onSave() {
-  const algorithmnData = {
-    problemNumber: 0,
-    problemTitle: 'test',
-    problemDifficulty: 'Lv1',
-    problemPlatform: 'baekjoon',
-    problemState: 'correct',
-    algorithmName: ['DP', 'BFS'],
-    codeContent: 'testest',
-    codeCorrect: isRef.value,
-    codeTime: '123',
-    codeMemory: '123',
-    memo: memo.value,
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'sendPopup') {
+    metaData = message.data.bojData
+    platform = message.data.flatform
+    console.log("background부터 온 데이터",metaData)
+    sendResponse('data match!')
   }
+});
 
-  // eslint-disable-next-line no-console
-  console.log(algorithmnData)
+// let problemNumber:number
+function saveData() {
+  if(metaData){
+    const problemData: Problem = {
+      problemNumber: parseInt(metaData.problemId),
+      problemTitle: metaData.title,
+      problemUrl: metaData.problemLink,
+      problemDescription: metaData.problem_description,
+      problemDifficulty: metaData.levelWithLv,
+      problemPlatform: platform,
+      algorithmNames: ["Algorithm1"],
+      problemMemo: memo.value,
+      problemState: state.value,
+      content: "",
+      code: metaData.code,
+      codeLanguage: metaData.language,
+      codeCorrect: isCorrect.value,
+      codeMemory: metaData.memory,
+      codeTime: metaData.runtime
+    };
+    console.log(problemData)
+    postData(problemData)
+    memo.value = ''
+    //popup 닫기
+    // return data
+  }
+  else{
+    console.log('metaData가 없습니다.')
+  }
+}
+const baseUrl = 'http://localhost:8080/api/v1'
 
-  const baseUrl = 'http://localhost:8080/api/v1'
-  // post 요청
-  // eslint-disable-next-line no-console
-  console.log(algorithmnData)
-  axios.post(`${baseUrl}/problems/submit`, algorithmnData)
-    .then((response) => {
-      // eslint-disable-next-line no-console
-      console.log(response)
-    })
-    .catch((error: Error) => {
-      // eslint-disable-next-line no-console
-      console.log(error)
-    })
+function postData(data:Problem) {
+  axios.post(`${baseUrl}/problems/submit`, data)
+      .then((response) => {
+        console.log(response)
+      })
+      .catch((error: Error) => {
+        console.log(error)
+      })
 }
 function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
@@ -98,7 +116,7 @@ function openMainPage() {
   <div
     class="shadow-[0px_0px_10px_0px_rgba(0,0,0,0.25)] rounded-[10px] bg-[#FFFFFF] flex flex-col w-[300px] h-[257px] items-center p-[15px]"
   >
-    <div class="inline-block font-black text-[25px] text-[#004AB9]" @click="openMainPage">
+    <div class="inline-block font-black text-[25px] text-[#004AB9]" @click="openMainPage()">
       <router-link to="/main">
         Alchive
       </router-link>
@@ -139,9 +157,9 @@ function openMainPage() {
       </div>
     </div>
     <div
-      class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center mt-1 p-[4px_14px] box-sizing-border"
+      class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] hover:text-[#004AB9]  bg-[#EEEEEE] flex flex-row text-[#2F2F2F] justify-center mt-1 p-[4px_14px] box-sizing-border"
     >
-      <span class="break-words font-medium text-[12px] text-[#2F2F2F]" @click="onSave"> 저장하기 </span>
+      <span class="cursor-pointer break-words font-medium text-[12px] hover:font-700" @click="saveData()"> 저장하기 </span>
     </div>
   </div>
 </template>

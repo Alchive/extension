@@ -23,7 +23,6 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
 //  * @param {string} text - unescape할 문자열
 //  * @returns {string} - unescape된 문자열
 //  */
-//
 
 /**
  * url에 해당하는 html 문서를 가져오는 함수
@@ -37,12 +36,13 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
 let loader
 
 const currentUrl = window.location.href
-
+let flatform = ''
 // 프로그래머스 연습 문제 주소임을 확인하고, 맞다면 로더를 실행
 if (currentUrl.includes('/learn/courses/30') && currentUrl.includes('lessons'))
-  startLoader()
+  flatform = 'programmers'
+  startLoader(flatform)
 
-function startLoader() {
+function startLoader(flatform) {
   loader = setInterval(async () => {
     // 기능 Off시 작동하지 않도록 함
     // const enable = await checkEnable()
@@ -66,8 +66,9 @@ function startLoader() {
       stopLoader()
       try {
         const bojData = await parseData()
-        const popupData = { title: bojData.title, number: bojData.problemId, state: bojData.result_message }
-        await sendDataToBackground(bojData)
+        // const popupData = { title: bojData.title, number: bojData.problemId, state: bojData.result_message }
+        await sendDataToBackground({bojData, flatform})
+        // await sendDataToPopup({bojData, flatform})
         // await sendDataToPopup(popupData)
         // await browser.runtime.sendMessage('openPopup')
         console.log('데이터 추출', bojData)
@@ -247,31 +248,38 @@ async function parseData() {
 async function makeData(origin) {
   const { link, problem_description, problemId, level, result_message, division, language_extension, title, runtime, memory, code, language } = origin
   // const directory = await getDirNameByOrgOption(`프로그래머스/${level}/${problemId}.${convertSingleCharToDoubleChar(title)}`, language)
-  const levelWithLv = `${level}`.includes('lv') ? level : `lv${level}`.replace('lv', 'level ')
+  const levelWithLv = `${level}`.includes('lv') ? level : `lv${level}`.replace('lv', 'Lv.')
   const message = `[${levelWithLv}] Title: ${title}, Time: ${runtime}, Memory: ${memory} -BaekjoonHub`
   // const fileName = `${convertSingleCharToDoubleChar(title)}.${language_extension}`
   const dateInfo = getDateString(new Date(Date.now()))
-
+  // result_message에서 score 추출
   const startIndex = result_message.indexOf('합계: ') + 4
   const endIndex = result_message.indexOf(' /')
   const score = result_message.substring(startIndex, endIndex)
+  let problemLink = link;
+  console.log(link)
+  if (link.includes('programmers')){
+    console.log('link transforming..')
+    problemLink = `${link}learn/courses/30/lessons/${problemId}`;
+  }
+
   // prettier-ignore
-  const readme
-      = `# [${levelWithLv}] ${title} - ${problemId} \n\n`
-      + `[문제 링크](${link}) \n\n`
-      + `### 성능 요약\n\n`
-      + `메모리: ${memory}, `
-      + `시간: ${runtime}\n\n`
-      + `### 구분\n\n`
-      + `${division.replace('/', ' > ')}\n\n`
-      + `### 채점결과\n\n`
-      + `${result_message}\n\n`
-      + `### 제출 일자\n\n`
-      + `${dateInfo}\n\n`
-      + `### 문제 설명\n\n`
-      + `${problem_description}\n\n`
-      + `> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges`
-  return { title, problemId, levelWithLv, score, dateInfo, code }
+  // const readme
+  //     = `# [${levelWithLv}] ${title} - ${problemId} \n\n`
+  //     + `[문제 링크](${link}) \n\n`
+  //     + `### 성능 요약\n\n`
+  //     + `메모리: ${memory}, `
+  //     + `시간: ${runtime}\n\n`
+  //     + `### 구분\n\n`
+  //     + `${division.replace('/', ' > ')}\n\n`
+  //     + `### 채점결과\n\n`
+  //     + `${result_message}\n\n`
+  //     + `### 제출 일자\n\n`
+  //     + `${dateInfo}\n\n`
+  //     + `### 문제 설명\n\n`
+  //     + `${problem_description}\n\n`
+  //     + `> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges`
+  return { problemLink, title, problemId, problem_description, levelWithLv, score, dateInfo, code, memory, runtime, language }
 }
 
 function sendDataToBackground(data) {
@@ -281,3 +289,12 @@ function sendDataToBackground(data) {
     console.error('Error sending message:', error)
   })
 }
+
+// function sendDataToPopup(data){
+//   browser.runtime.sendMessage({ type: 'sendDataToPopup', data }).then((message) => {
+//     console.log('보내는 data',data)
+//     console.log('sendDataToPopup 응답:', message)
+//   }).catch((error) => {
+//     console.error('Error sending message:', error)
+//   })
+// }

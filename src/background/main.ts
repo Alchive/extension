@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import problemData from "~/types/problemData";
 // import { onMessage } from 'webext-bridge/background'
 // only on dev mode
 
@@ -9,9 +10,22 @@ if (import.meta.hot) {
   // import('./contentScriptHMR')
 }
 
-browser.runtime.onInstalled.addListener((): void => {
+browser.runtime.onInstalled.addListener(async() => {
   // eslint-disable-next-line no-console
   console.log('Extension installed')
+  // for (const cs of chrome.runtime.getManifest().content_scripts) {
+  //   for (const tab of await chrome.tabs.query({url: cs.matches})) {
+  //     if (tab.url.match(/(chrome|chrome-extension):\/\//gi)) {
+  //       continue;
+  //     }
+  //     chrome.scripting.executeScript({
+  //       files: cs.js,
+  //       target: {tabId: tab.id, allFrames: cs.all_frames},
+  //       injectImmediately: cs.run_at === 'document_start',
+  //       // world: cs.world, // uncomment if you use it in manifest.json in Chrome 111+
+  //     });
+  //   }
+  // }
 })
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -30,11 +44,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if (message.type === 'sendProblemData') {
     // eslint-disable-next-line no-console
     console.log('sendProblemData 받음', message.data)
+    const postData = message.data
+    const data = message.data.bojData
+    // const flatform = message.data.flatform
 
     const popupData = {
-      title: message.data.title,
-      number: message.data.problemId,
-      state: message.data.score,
+      title: data.title,
+      number: data.problemId,
+      state: data.score,
     }
 
     // popup페이지에서 데이터들을 동적으로 나태내기위해 저장
@@ -53,12 +70,34 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         width: 300,
         top: 75,
         left: 1300,
-      })
+      }).then((window) => {
+        // console.log(postData)
+        if (window && window.id) {
+          // 팝업 창이 열려 있는 경우 1초 뒤에 메세지를 보냄
+          setTimeout(() => {
+            sendMessageToPopup(postData)
+          }, 1000);
+        } else {
+          console.error('팝업 창이 닫혔습니다.')
+        }
+      }).catch((error) => {
+        console.error('팝업 열기 에러:', error)
+      });
     }
+
+    //API 통신
   }
   sendResponse()
 })
 
+// contentscript에서 받은 파일을 background로
+const sendMessageToPopup = (data:problemData) =>{
+  browser.runtime.sendMessage({ type: 'sendPopup', data }).then((message: string) => {
+    console.log('background->popup으로 보낸 후 응답', message);
+  }).catch((error: string) => {
+    console.error('background->popup sending error:', error);
+  });
+}
 // async function fetchProblemDescriptionById(problemId: number) {
 //   return fetch(`https://www.acmicpc.net/problem/${problemId}`)
 //     .then(res => res.text())
