@@ -1,105 +1,152 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-
+import axios from 'axios'
 import browser from 'webextension-polyfill'
-
+import {Problem, MetaData} from "~/types/problemData";
 const memo = ref('')
 const isRef = ref(false)
+const title = ref('')
+const number = ref('')
+const state = ref('')
+const isCorrect = ref(false)
+const color = ref('#000000')
+const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzE2MTIyMTE1LCJleHAiOjE3MTYxNjUzMTV9.NmHsixqLDFSuwp-dTCBdFD_FIzAytUyim3udQk_9q1Q'
+let metaData:MetaData | null = null; // 전역 변수로 선언
+let platform:string = ''
 
-function onSave() {
-  // const algorithmnData = {
-  //   memo: memo.value,
-  //   isRef: isRef.value,
-  // };
-  //
-  // const algorithmnData = {
-  //   problemNumber: 0,
-  //   problemTitle: 'test',
-  //   problemDifficulty: 'Lv1',
-  //   problemPlatform: 'baekjoon',
-  //   problemState: 'correct',
-  //   algorithmName: ['DP', 'BFS'],
-  //   codeContent: 'testest',
-  //   codeCorrect: isRef.value,
-  //   codeTime: '123',
-  //   codeMemory: '123',
-  //   memo: memo.value,
-  // }
 
-  // const baseUrl = '/api/v1'
-  // post 요청
-  // console.log(algorithmnData)
-  // axios.post(`${baseUrl}/problems/submit`, algorithmnData)
-  //   .then((response: AxiosResponse) => {
-  //     console.log(response)
-  //   })
-  //   .catch((error: Error) => {
-  //     console.log(error)
-  //   })
+browser.storage.local.get().then((item) => {
+  console.log('스토리지 값', item.popupData)
+
+  title.value = item.popupData.title
+  number.value = item.popupData.number
+  state.value = item.popupData.state
+
+  if(parseInt(state.value) <= 100){
+    state.value = ' 틀렸습니다 '
+    isCorrect.value = false
+    color.value = '#ff0000'
+  }
+  else if(state.value === '100.0'){
+    state.value = ' 맞았습니다 '
+    isCorrect.value = true
+    color.value = '#00992B'
+  }
+}).catch((error) => {
+    console.log(`Error: ${error}`)
+  })
+
+// browser.storage.local.get(['title', 'number', 'state'])
+//     .then((result) => {
+//       title.value = result.title || ''
+//       number.value = result.number || ''
+//       state.value = result.state || ''
+//     })
+//     .catch((error) => {
+//       console.error('스토리지에서 값 가져오는 중 오류 발생:', error)
+//     })
+
+// document.addEventListener('DOMContentLoaded', function() {
+//   // 팝업이 로드된 후에 메시지를 수신하는 이벤트 핸들러를 설정합니다.
+//   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (message.type === 'sendPopup') {
+//       console.log('popup에 도착:', message.data)
+//       // 팝업으로부터 받은 데이터 처리
+//       sendResponse('data match!')
+//     }
+//   });
+// });
+
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'sendPopup') {
+    metaData = message.data.bojData
+    platform = message.data.flatform
+    console.log("background부터 온 데이터",metaData)
+    sendResponse('data match!')
+  }
+});
+
+// let problemNumber:number
+function saveData() {
+  if(metaData){
+    const problemData: Problem = {
+      problemNumber: parseInt(metaData.problemId),
+      problemTitle: metaData.title,
+      problemUrl: metaData.problemLink,
+      problemDescription: metaData.problem_description,
+      problemDifficulty: metaData.levelWithLv,
+      problemPlatform: platform,
+      algorithmNames: ["Algorithm1"],
+      problemMemo: memo.value,
+      problemState: state.value,
+      solutionInfo:{
+        content: "?",
+        code: metaData.code,
+        codeLanguage: metaData.language,
+        codeCorrect: isCorrect.value,
+        codeMemory: metaData.memory,
+        codeTime: metaData.runtime
+      }
+
+    };
+    console.log(problemData)
+    postData(problemData)
+    memo.value = ''
+    //popup 닫기
+    // return data
+  }
+  else{
+    console.log('metaData가 없습니다.')
+  }
+}
+const baseUrl = 'http://localhost:8080/api/v1'
+
+function postData(problemRequest:Problem) {
+  axios.post(`${baseUrl}/problems/submit`, problemRequest, {
+    headers:{
+      authorization:`Bearer+ ${token}`
+    }
+  }).then((response) => {
+    console.log(response)
+    browser.windows.getCurrent().then((window) => {
+      if (window) {
+        const windowId = window.id as number;
+        console.log('현재 창',windowId)
+        browser.windows.remove(windowId);
+      } else {
+        console.log('현재 창을 찾을 수 없습니다.');
+      }
+    }).catch((error) => {
+      console.error('창을 가져오는 중 오류 발생:', error);
+    });
+  }).catch((error: Error) => {
+    console.log(error)
+  })
 }
 function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
 }
 
-// function parseProblemDescription(doc = document) {
-//   convertImageTagAbsoluteURL(doc.getElementById('problem_description')); //이미지에 상대 경로가 있을 수 있으므로 이미지 경로를 절대 경로로 전환 합니다.
-//   const problemId = doc.getElementsByTagName('title')[0].textContent.split(':')[0].replace(/[^0-9]/, '');
-//   const problem_description = unescapeHtml(doc.getElementById('problem_description').innerHTML.trim());
-//   const problem_input = doc.getElementById('problem_input')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
-//   const problem_output = doc.getElementById('problem_output')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
-//   if (problemId && problem_description) {
-//     log(`문제번호 ${problemId}의 내용을 저장합니다.`);
-//     updateProblemsFromStats({ problemId, problem_description, problem_input, problem_output});
-//     return { problemId, problem_description, problem_input, problem_output};
-//   }
-//   return {};
-// }
-async function fetchProblemDescriptionById(problemId: number) {
-  return fetch(`https://www.acmicpc.net/problem/${problemId}`)
-    .then(res => res.text())
-    .then((html) => {
-      const doc = new DOMParser().parseFromString(html, 'text/html')
-      // console.log(doc)
-      return (doc)
-    })
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-    const tab = tabs[0]
-    // console.log(tab)
-    if (tab && tab.id) {
-      // console.log('tabId', tab.id)
-      // Change the problemId value to the appropriate problem ID
-      fetchProblemDescriptionById(17828).then(() => {
-      //   // Do something with the fetched problem description
-      //   // console.log('doc:', doc)
-      // }).catch((error) => {
-      //   console.error('Error fetching problem description:', error)
-      })
-    }
-  })
-})
 </script>
 
 <template>
   <div
     class="shadow-[0px_0px_10px_0px_rgba(0,0,0,0.25)] rounded-[10px] bg-[#FFFFFF] flex flex-col w-[300px] h-[257px] items-center p-[15px]"
   >
-    <div class="inline-block font-black text-[25px] text-[#004AB9]" @click="openMainPage">
+    <div class="inline-block font-black text-[25px] text-[#004AB9]" @click="openMainPage()">
       <router-link to="/main">
         Alchive
       </router-link>
     </div>
     <div class="mt-[12px] mb-[12px] w-[100%] border-t-[1.5px] border-[#EEEEEE] border-solid" />
     <div class="m-[0_0_12px_0] flex flex-row justify-between w-[100%] box-sizing-border">
-      <div class="inline-block break-words font-semibold text-[12px] text-[#00992B]">
-        27297. 맨해튼에서의 모임
+      <div class="inline-block break-words font-semibold text-[12px]" :style="{ color: color }">
+        {{ number }}. {{ title }}
       </div>
       <div
         class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center p-[2px_3px] box-sizing-border"
       >
-        <span class="break-words font-semibold text-[10px] text-[#00992B]"> 맞았습니다 </span>
+        <span class="break-words font-semibold text-[10px] " :style="{ color: color }"> {{ state }} </span>
       </div>
     </div>
     <textarea
@@ -127,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
     <div
-      class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] bg-[#EEEEEE] flex flex-row justify-center mt-1 p-[4px_14px] box-sizing-border"
+      class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] hover:text-[#004AB9]  bg-[#EEEEEE] flex flex-row text-[#2F2F2F] justify-center mt-1 p-[4px_14px] box-sizing-border"
     >
-      <span class="break-words font-medium text-[12px] text-[#2F2F2F]" @click="onSave"> 저장하기 </span>
+      <span class="cursor-pointer break-words font-medium text-[12px] hover:font-700" @click="saveData()"> 저장하기 </span>
     </div>
   </div>
 </template>

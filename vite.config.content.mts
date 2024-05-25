@@ -22,7 +22,9 @@ export default defineConfig({
     emptyOutDir: false,
     sourcemap: isDev ? 'inline' : false,
     lib: {
-      entry: r('src/contentScripts/index.ts'),
+      entry: [
+        r('src/contentScripts/baekjoon.js'),
+      ],
       name: packageJson.name,
       formats: ['iife'],
     },
