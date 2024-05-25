@@ -9,6 +9,11 @@ export interface Problem {
     algorithmNames: string[];
     problemMemo: string;
     problemState: string;
+    solutionInfo: SolutionInfo;
+}
+
+// 해결책 정보
+export interface SolutionInfo {
     content: string;
     code: string;
     codeLanguage: string;

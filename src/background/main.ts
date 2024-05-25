@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill'
-import problemData from "~/types/problemData";
+// import {MetaData} from "~/types/problemData";
 // import { onMessage } from 'webext-bridge/background'
 // only on dev mode
 
@@ -73,10 +73,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }).then((window) => {
         // console.log(postData)
         if (window && window.id) {
-          // 팝업 창이 열려 있는 경우 1초 뒤에 메세지를 보냄
+          // 팝업 창이 열려 있는 경우 0.1초 뒤에 메세지를 보냄
           setTimeout(() => {
             sendMessageToPopup(postData)
-          }, 1000);
+          }, 500);
         } else {
           console.error('팝업 창이 닫혔습니다.')
         }
@@ -91,7 +91,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 // contentscript에서 받은 파일을 background로
-const sendMessageToPopup = (data:problemData) =>{
+const sendMessageToPopup = (data:any) =>{
   browser.runtime.sendMessage({ type: 'sendPopup', data }).then((message: string) => {
     console.log('background->popup으로 보낸 후 응답', message);
   }).catch((error: string) => {

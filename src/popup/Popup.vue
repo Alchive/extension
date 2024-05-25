@@ -10,6 +10,7 @@ const number = ref('')
 const state = ref('')
 const isCorrect = ref(false)
 const color = ref('#000000')
+const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzE2MTIyMTE1LCJleHAiOjE3MTYxNjUzMTV9.NmHsixqLDFSuwp-dTCBdFD_FIzAytUyim3udQk_9q1Q'
 let metaData:MetaData | null = null; // 전역 변수로 선언
 let platform:string = ''
 
@@ -78,12 +79,15 @@ function saveData() {
       algorithmNames: ["Algorithm1"],
       problemMemo: memo.value,
       problemState: state.value,
-      content: "",
-      code: metaData.code,
-      codeLanguage: metaData.language,
-      codeCorrect: isCorrect.value,
-      codeMemory: metaData.memory,
-      codeTime: metaData.runtime
+      solutionInfo:{
+        content: "?",
+        code: metaData.code,
+        codeLanguage: metaData.language,
+        codeCorrect: isCorrect.value,
+        codeMemory: metaData.memory,
+        codeTime: metaData.runtime
+      }
+
     };
     console.log(problemData)
     postData(problemData)
@@ -97,14 +101,27 @@ function saveData() {
 }
 const baseUrl = 'http://localhost:8080/api/v1'
 
-function postData(data:Problem) {
-  axios.post(`${baseUrl}/problems/submit`, data)
-      .then((response) => {
-        console.log(response)
-      })
-      .catch((error: Error) => {
-        console.log(error)
-      })
+function postData(problemRequest:Problem) {
+  axios.post(`${baseUrl}/problems/submit`, problemRequest, {
+    headers:{
+      authorization:`Bearer+ ${token}`
+    }
+  }).then((response) => {
+    console.log(response)
+    browser.windows.getCurrent().then((window) => {
+      if (window) {
+        const windowId = window.id as number;
+        console.log('현재 창',windowId)
+        browser.windows.remove(windowId);
+      } else {
+        console.log('현재 창을 찾을 수 없습니다.');
+      }
+    }).catch((error) => {
+      console.error('창을 가져오는 중 오류 발생:', error);
+    });
+  }).catch((error: Error) => {
+    console.log(error)
+  })
 }
 function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
