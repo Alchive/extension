@@ -2,127 +2,111 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import browser from 'webextension-polyfill'
-import {Problem, MetaData} from "~/types/problemData";
+import {ProblemData, MetaData, SolutionInfo, SolutionStatus} from "~/types/problemData";
 const memo = ref('')
 const isRef = ref(false)
 const title = ref('')
 const number = ref('')
 const state = ref('')
-const isCorrect = ref(false)
+const isCorrect = ref('')
 const color = ref('#000000')
-const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzE2MTIyMTE1LCJleHAiOjE3MTYxNjUzMTV9.NmHsixqLDFSuwp-dTCBdFD_FIzAytUyim3udQk_9q1Q'
 let metaData:MetaData | null = null; // 전역 변수로 선언
 let platform:string = ''
 
-
 browser.storage.local.get().then((item) => {
-  console.log('스토리지 값', item.popupData)
-
   title.value = item.popupData.title
   number.value = item.popupData.number
   state.value = item.popupData.state
 
   if(parseInt(state.value) <= 100){
     state.value = ' 틀렸습니다 '
-    isCorrect.value = false
+    isCorrect.value = '오답'
     color.value = '#ff0000'
   }
   else if(state.value === '100.0'){
     state.value = ' 맞았습니다 '
-    isCorrect.value = true
+    isCorrect.value = '정답'
     color.value = '#00992B'
   }
 }).catch((error) => {
     console.log(`Error: ${error}`)
   })
 
-// browser.storage.local.get(['title', 'number', 'state'])
-//     .then((result) => {
-//       title.value = result.title || ''
-//       number.value = result.number || ''
-//       state.value = result.state || ''
-//     })
-//     .catch((error) => {
-//       console.error('스토리지에서 값 가져오는 중 오류 발생:', error)
-//     })
-
-// document.addEventListener('DOMContentLoaded', function() {
-//   // 팝업이 로드된 후에 메시지를 수신하는 이벤트 핸들러를 설정합니다.
-//   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//     if (message.type === 'sendPopup') {
-//       console.log('popup에 도착:', message.data)
-//       // 팝업으로부터 받은 데이터 처리
-//       sendResponse('data match!')
-//     }
-//   });
-// });
-
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'sendPopup') {
-    metaData = message.data.bojData
-    platform = message.data.flatform
-    console.log("background부터 온 데이터",metaData)
-    sendResponse('data match!')
+    metaData = message.data.bojData;
+    platform = message.data.flatform.toUpperCase();
+
+    sendResponse('data match!');
   }
 });
 
-// let problemNumber:number
 function saveData() {
   if(metaData){
-    const problemData: Problem = {
-      problemNumber: parseInt(metaData.problemId),
-      problemTitle: metaData.title,
-      problemUrl: metaData.problemLink,
-      problemDescription: metaData.problem_description,
-      problemDifficulty: metaData.levelWithLv,
-      problemPlatform: platform,
-      algorithmNames: ["Algorithm1"],
-      problemMemo: memo.value,
-      problemState: state.value,
-      solutionInfo:{
-        content: "?",
-        code: metaData.code,
-        codeLanguage: metaData.language,
-        codeCorrect: isCorrect.value,
-        codeMemory: metaData.memory,
-        codeTime: metaData.runtime
-      }
-
+    const problemData:ProblemData = {
+      problemCreateRequest: {
+        number: parseInt(metaData.problemId),
+        title: metaData.title,
+        content: metaData.problem_description,
+        url: metaData.problemLink,
+        difficulty: metaData.levelWithLv,
+        platform: platform,
+        algorithms: ["none"]
+      },
+      memo: memo.value || "",
+      description: 'no', // 사용자 오답 기록
+      status: isCorrect.value ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
     };
-    console.log(problemData)
-    postData(problemData)
+
+    const problemCode: SolutionInfo = {
+      content: metaData.code,
+      language: metaData.language.toUpperCase(),
+      description: `이 문제는 ${metaData.title} 문제의 솔루션입니다.`,
+      status: isCorrect.value ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
+      memory: parseFloat(metaData.memory),
+      time: parseFloat(metaData.runtime),
+      submitAt: metaData.dateInfo,
+    };
+
+    postData(problemData, problemCode);
     memo.value = ''
-    //popup 닫기
-    // return data
   }
   else{
     console.log('metaData가 없습니다.')
   }
 }
-const baseUrl = 'http://localhost:8080/api/v1'
 
-function postData(problemRequest:Problem) {
-  axios.post(`${baseUrl}/problems/submit`, problemRequest, {
+const baseUrl = 'http://localhost:8080/api/v1'
+const token ='eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzI5MTA2NDAyLCJleHAiOjE3MjkxNDk2MDJ9.wzUmO0OaVDcQ_c45CBVEmbRgJ3muwWWkDAVdrFsIVlI'
+function postData(problemRequest:ProblemData, problemCode:SolutionInfo) {
+  axios.post(`${baseUrl}/boards`, problemRequest, {
     headers:{
-      authorization:`Bearer+ ${token}`
+      authorization:`Bearer ${token}`
     }
   }).then((response) => {
-    console.log(response)
+    const boardId = response.data.data.id;
+    return postSolutions(problemCode, boardId);
+  }).then(() => {
     browser.windows.getCurrent().then((window) => {
-      if (window) {
-        const windowId = window.id as number;
-        console.log('현재 창',windowId)
-        browser.windows.remove(windowId);
-      } else {
-        console.log('현재 창을 찾을 수 없습니다.');
+      if (window?.id) {
+        browser.windows.remove(window.id);
       }
     }).catch((error) => {
-      console.error('창을 가져오는 중 오류 발생:', error);
+      console.error("창 닫는 중 오류 발생:", error);
     });
-  }).catch((error: Error) => {
-    console.log(error)
-  })
+  }).catch((error) => {
+    console.error("데이터 전송 중 오류 발생:", error);
+  });
 }
+
+function postSolutions(problemCode:SolutionInfo, boardId:number) {
+  axios.post(`${baseUrl}/solutions/${boardId}`, problemCode, {
+    headers:{
+      authorization:`Bearer ${token}`
+    }
+  });
+}
+
 function openMainPage() {
   browser.tabs.create({ url: 'http://localhost:5173/main' })
 }
@@ -176,7 +160,7 @@ function openMainPage() {
     <div
       class="shadow-[0px_0px_2px_0px_rgba(0,0,0,0.25)] rounded-[5px] hover:text-[#004AB9]  bg-[#EEEEEE] flex flex-row text-[#2F2F2F] justify-center mt-1 p-[4px_14px] box-sizing-border"
     >
-      <span class="cursor-pointer break-words font-medium text-[12px] hover:font-700" @click="saveData()"> 저장하기 </span>
+      <span class="cursor-pointer break-words font-medium text-[12px] hover:font-700" @click="saveData"> 저장하기 </span>
     </div>
   </div>
 </template>
