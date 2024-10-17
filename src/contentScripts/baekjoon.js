@@ -65,7 +65,7 @@ function startLoader(flatform) {
     if (getSolvedResult()) {
       stopLoader()
       try {
-        const bojData = await parseData()
+        const bojData = await parseData();
         // const popupData = { title: bojData.title, number: bojData.problemId, state: bojData.result_message }
         await sendDataToBackground({bojData, flatform})
         // await sendDataToPopup({bojData, flatform})
@@ -224,7 +224,7 @@ async function parseData() {
     .map(x => convertSingleCharToDoubleChar(x))
     .reduce((a, b) => `${a}/${b}`)
   const title = document.querySelector('.algorithm-title .challenge-title').textContent.replace(/\\n/g, '').trim()
-  const problem_description = document.querySelector('div.guide-section-description > div.markdown').innerHTML
+  const problem_description = document.querySelector('div.guide-section-description > div.markdown').innerText
   const language_extension = document.querySelector('div.editor > ul > li.nav-item > a').innerText.split('.')[1]
   const code = document.querySelector('textarea#code').value || ''
   const result_message
@@ -248,18 +248,16 @@ async function parseData() {
 async function makeData(origin) {
   const { link, problem_description, problemId, level, result_message, division, language_extension, title, runtime, memory, code, language } = origin
   // const directory = await getDirNameByOrgOption(`프로그래머스/${level}/${problemId}.${convertSingleCharToDoubleChar(title)}`, language)
-  const levelWithLv = `${level}`.includes('lv') ? level : `lv${level}`.replace('lv', 'Lv.')
+  const levelWithLv = `${level}`.includes('lv') ? level : `lv${level}`.replace('lv', 'LEVEL')
   const message = `[${levelWithLv}] Title: ${title}, Time: ${runtime}, Memory: ${memory} -BaekjoonHub`
   // const fileName = `${convertSingleCharToDoubleChar(title)}.${language_extension}`
-  const dateInfo = getDateString(new Date(Date.now()))
-  // result_message에서 score 추출
+  const dateInfo = new Date().toISOString()
   const startIndex = result_message.indexOf('합계: ') + 4
   const endIndex = result_message.indexOf(' /')
   const score = result_message.substring(startIndex, endIndex)
   let problemLink = link;
   console.log(link)
   if (link.includes('programmers')){
-    console.log('link transforming..')
     problemLink = `${link}learn/courses/30/lessons/${problemId}`;
   }
 
@@ -289,12 +287,3 @@ function sendDataToBackground(data) {
     console.error('Error sending message:', error)
   })
 }
-
-// function sendDataToPopup(data){
-//   browser.runtime.sendMessage({ type: 'sendDataToPopup', data }).then((message) => {
-//     console.log('보내는 data',data)
-//     console.log('sendDataToPopup 응답:', message)
-//   }).catch((error) => {
-//     console.error('Error sending message:', error)
-//   })
-// }

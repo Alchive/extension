@@ -31,15 +31,6 @@ browser.runtime.onInstalled.addListener(async() => {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'openPopup') {
     console.log('메세지 받음')
-    // 지금은 이렇게 페이지가 열리지만 나중에는 option.html활용해서 플로팅버튼 누르는 이벤트 발생시켜서 저장페이지 띄워지도록..?
-    // browser.windows.create({
-    //   url: '../dist/popup/index.html',
-    //   type: 'popup',
-    //   height: 290,
-    //   width: 300,
-    //   top: 100,
-    //   left: 1300,
-    // })
   }
   else if (message.type === 'sendProblemData') {
     // eslint-disable-next-line no-console
@@ -54,13 +45,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       state: data.score,
     }
 
-    // popup페이지에서 데이터들을 동적으로 나태내기위해 저장
     browser.storage.local.set({ popupData }).then(() => {
       console.log('OK', popupData)
-    })
-      .catch((error) => {
+    }).catch((error) => {
         console.log(error)
-      })
+    })
+
     // 데이터 저장 후 팝업 창 띄움
     if (popupData) {
       browser.windows.create({
@@ -71,9 +61,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         top: 75,
         left: 1300,
       }).then((window) => {
-        // console.log(postData)
         if (window && window.id) {
-          // 팝업 창이 열려 있는 경우 0.1초 뒤에 메세지를 보냄
           setTimeout(() => {
             sendMessageToPopup(postData)
           }, 500);
