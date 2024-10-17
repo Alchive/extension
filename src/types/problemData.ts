@@ -1,25 +1,37 @@
-// ProblemData.ts
-export interface Problem {
-    problemNumber: number;
-    problemTitle: string;
-    problemUrl: string;
-    problemDescription: string;
-    problemDifficulty: string;
-    problemPlatform: string;
-    algorithmNames: string[];
-    problemMemo: string;
-    problemState: string;
-    solutionInfo: SolutionInfo;
+interface ProblemCreateRequest {
+    number: number;
+    title: string;
+    content: string;
+    url: string;
+    difficulty: string;
+    platform: string;
+    algorithms: string[];
+}
+export enum SolutionStatus {
+    CORRECT = "CORRECT",
+    INCORRECT = "INCORRECT"
 }
 
-// 해결책 정보
+export enum LevelStatus {
+    CORRECT = "CORRECT",
+    INCORRECT = "INCORRECT"
+}
+
+export interface ProblemData {
+    problemCreateRequest: ProblemCreateRequest;
+    memo: string;
+    description: string;
+    status: SolutionStatus;
+}
+
 export interface SolutionInfo {
     content: string;
-    code: string;
-    codeLanguage: string;
-    codeCorrect: boolean;
-    codeMemory: string;
-    codeTime: string;
+    language: string;
+    description: string;
+    status: SolutionStatus;
+    memory: number;
+    time: number;
+    submitAt: string;
 }
 
 export interface MetaData {
