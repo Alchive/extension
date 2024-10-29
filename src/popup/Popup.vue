@@ -18,7 +18,7 @@ browser.storage.local.get().then((item) => {
   number.value = item.popupData.number
   state.value = item.popupData.state
 
-  if(parseInt(state.value) <= 100){
+  if(parseInt(state.value) < 100){
     state.value = ' 틀렸습니다 '
     isCorrect.value = '오답'
     color.value = '#ff0000'
@@ -77,7 +77,7 @@ function saveData() {
 }
 
 const baseUrl = 'http://localhost:8080/api/v1'
-const token ='eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzI5MTA2NDAyLCJleHAiOjE3MjkxNDk2MDJ9.wzUmO0OaVDcQ_c45CBVEmbRgJ3muwWWkDAVdrFsIVlI'
+const token = localStorage.getItem('access_token');
 function postData(problemRequest:ProblemData, problemCode:SolutionInfo) {
   axios.post(`${baseUrl}/boards`, problemRequest, {
     headers:{
