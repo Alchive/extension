@@ -1,6 +1,4 @@
 import browser from 'webextension-polyfill'
-// import {MetaData} from "~/types/problemData";
-// import { onMessage } from 'webext-bridge/background'
 // only on dev mode
 
 if (import.meta.hot) {
@@ -30,11 +28,10 @@ browser.runtime.onInstalled.addListener(async() => {
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'openPopup') {
-    console.log('메세지 받음')
+    console.log('');
   }
   else if (message.type === 'sendProblemData') {
     // eslint-disable-next-line no-console
-    console.log('sendProblemData 받음', message.data)
     const postData = message.data
     const data = message.data.bojData
     // const flatform = message.data.flatform
@@ -81,118 +78,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // contentscript에서 받은 파일을 background로
 const sendMessageToPopup = (data:any) =>{
   browser.runtime.sendMessage({ type: 'sendPopup', data }).then((message: string) => {
-    console.log('background->popup으로 보낸 후 응답', message);
+    // console.log('background->popup으로 보낸 후 응답', message);
   }).catch((error: string) => {
-    console.error('background->popup sending error:', error);
+    // console.error('background->popup sending error:', error);
   });
 }
-// async function fetchProblemDescriptionById(problemId: number) {
-//   return fetch(`https://www.acmicpc.net/problem/${problemId}`)
-//     .then(res => res.text())
-//     .then((html) => {
-//       const doc = new DOMParser().parseFromString(html, 'text/html')
-//       // console.log(doc)
-//       return (doc)
-//     })
-// }
-
-// Error fetching problem description: TypeError: Cannot read properties of undefined (reading 'fingerprint')
-// async function fetchProblemDescriptionById(problemId: number) {
-//   try {
-//     // 웹페이지의 HTML을 가져오기
-//     const response = await fetch(`https://www.acmicpc.net/problem/${problemId}`)
-//     const html = await response.json()
-//     console.log('?')
-//     console.log(response.json())
-//
-//     // content script로 HTML을 전달
-//     const result = await sendMessage('parse-html', { html })
-//     return result
-//   }
-//   catch (error) {
-//     console.error('Error fetching problem description:', error)
-//     throw error
-//   }
-// }
-// browser.tabs.onActivated.addListener(() => {
-//   browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-//     const tab = tabs[0]
-//     // eslint-disable-next-line no-console
-//     console.log(tab)
-//     if (tab && tab.id) {
-//       // console.log('tabId', tab.id)
-//       // Change the problemId value to the appropriate problem ID
-//       const problemId = 17828
-//
-//       fetchProblemDescriptionById(problemId).then((doc) => {
-//         // Do something with the fetched problem description
-//         // eslint-disable-next-line no-console
-//         console.log('doc:', doc)
-//       }).catch((error) => {
-//         console.error('Error fetching problem description:', error)
-//       })
-//     }
-//   })
-// })
-
-// let previousTabId = 0
-
-// communication example: send previous tab title from background page
-// see shim.d.ts for type declaration
-// browser.tabs.onActivated.addListener(async ({ tabId }) => {
-//   if (!previousTabId) {
-//     previousTabId = tabId
-//     return
-//   }
-//
-//   // let tab: Tabs.Tab
-//
-//   try {
-//     const tab = await browser.tabs.get(previousTabId)
-//     previousTabId = tabId
-//   }
-//   catch {
-//     return
-//   }
-
-//   browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-//     const tab = tabs[0]
-
-//     console.log('currentTab', tab)
-//     if (tab && tab.id) {
-
-//       console.log('tabId', tab.id)
-//       Change the problemId value to the appropriate problem ID
-//       const problemId = 17828
-//
-//       fetchProblemDescriptionById(problemId).then((doc) => {
-//         // Do something with the fetched problem description
-//         // eslint-disable-next-line no-console
-//         console.log('doc:', doc)
-//       }).catch((error) => {
-//         console.error('Error fetching problem description:', error)
-//       })
-//     }
-//     const response = browser.tabs.sendMessage(tab.id, { type: 'tab-prev' })
-//     console.log('Message from the content script:', response)
-//     const response = await chrome.tabs.sendMessage(tab.id, { greeting: 'hello' })
-//   })
-//
-//   console.log('previous tab', tab)
-//   sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
-//   const tabURL = tab.url
-// })
-//
-// onMessage('get-current-tab', async () => {
-//   try {
-//     const tab = await browser.tabs.get(previousTabId)
-//     return {
-//       title: tab?.title,
-//     }
-//   }
-//   catch {
-//     return {
-//       title: undefined,
-//     }
-//   }
-// })
