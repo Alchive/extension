@@ -11,7 +11,6 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // const { type, tabId } = request
 
   if (request.type === 'tab-prev') {
-    console.log('hi', sender)
     sendResponse({ farewell: 'goodbye' })
   }
 
@@ -71,7 +70,7 @@ function startLoader(flatform) {
         // await sendDataToPopup({bojData, flatform})
         // await sendDataToPopup(popupData)
         // await browser.runtime.sendMessage('openPopup')
-        console.log('데이터 추출', bojData)
+        // console.log('데이터 추출', bojData)
         // await beginUpload(bojData)
       }
       catch (error) {
@@ -87,48 +86,10 @@ function stopLoader() {
 
 function getSolvedResult() {
   const result = document.querySelector('div.modal-header > h4')
-  console.log('정답 문구', result)
   if (result)
     return result.innerText
   return ''
 }
-
-/* 파싱 직후 실행되는 함수 깃에 업로드 */
-// async function beginUpload(bojData) {
-//   console.log('bojData', bojData)
-//   if (isNotEmpty(bojData)) {
-//     startUpload()
-//
-//     const stats = await getStats()
-//     const hook = await getHook()
-//
-//     const currentVersion = stats.version
-//     /* 버전 차이가 발생하거나, 해당 hook에 대한 데이터가 없는 경우 localstorage의 Stats 값을 업데이트하고, version을 최신으로 변경한다 */
-//     if (isNull(currentVersion) || currentVersion !== getVersion() || isNull(await getStatsSHAfromPath(hook)))
-//       await versionUpdate()
-//
-//     /* 현재 제출하려는 소스코드가 기존 업로드한 내용과 같다면 중지 */
-//     cachedSHA = await getStatsSHAfromPath(`${hook}/${bojData.directory}/${bojData.fileName}`)
-//     calcSHA = calculateBlobSHA(bojData.code)
-//     log('cachedSHA', cachedSHA, 'calcSHA', calcSHA)
-//     if (cachedSHA === calcSHA) {
-//       markUploadedCSS(stats.branches, bojData.directory)
-//       console.log(`현재 제출번호를 업로드한 기록이 있습니다. problemIdID ${bojData.problemId}`)
-//       return
-//     }
-//     /* 신규 제출 번호라면 새롭게 커밋  */
-//     await uploadOneSolveProblemOnGit(bojData, markUploadedCSS)
-//   }
-// }
-//
-// async function versionUpdate() {
-//   log('start versionUpdate')
-//   const stats = await updateLocalStorageStats()
-//   // update version.
-//   stats.version = getVersion()
-//   await saveStats(stats)
-//   log('stats updated.', stats)
-// }
 
 // /* TODO: 하나의 데이터만 가져오는 구조이므로 page를 계속적으로
 //   아래 있는 네이베이션바의 "다음"버튼이 비활성화 될때까지 반복으로 진행한다.
@@ -256,7 +217,6 @@ async function makeData(origin) {
   const endIndex = result_message.indexOf(' /')
   const score = result_message.substring(startIndex, endIndex)
   let problemLink = link;
-  console.log(link)
   if (link.includes('programmers')){
     problemLink = `${link}learn/courses/30/lessons/${problemId}`;
   }
@@ -282,7 +242,6 @@ async function makeData(origin) {
 
 function sendDataToBackground(data) {
   browser.runtime.sendMessage({ type: 'sendProblemData', data }).then((message) => {
-    console.log('sendDataToBackground 응답:', message)
   }).catch((error) => {
     console.error('Error sending message:', error)
   })
