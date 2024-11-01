@@ -51,18 +51,18 @@ function saveData() {
         url: metaData.problemLink,
         difficulty: metaData.levelWithLv,
         platform: platform,
-        algorithms: ["none"]
+        algorithms: ['구현']
       },
       memo: memo.value || "",
-      description: 'no', // 사용자 오답 기록
-      status: isCorrect.value ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
+      description: '', // 사용자 오답 기록
+      status: isCorrect.value === '정답' ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
     };
 
     const problemCode: SolutionInfo = {
       content: metaData.code,
       language: metaData.language.toUpperCase(),
-      description: `이 문제는 ${metaData.title} 문제의 솔루션입니다.`,
-      status: isCorrect.value ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
+      description: '',
+      status: isCorrect.value ==='정답' ? SolutionStatus.CORRECT : SolutionStatus.INCORRECT,
       memory: parseFloat(metaData.memory),
       time: parseFloat(metaData.runtime),
       submitAt: metaData.dateInfo,
@@ -77,7 +77,8 @@ function saveData() {
 }
 
 const baseUrl = 'http://localhost:8080/api/v1'
-const token = localStorage.getItem('access_token');
+// const token = localStorage.getItem('access_token');
+const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzMwMzkwNTY3LCJleHAiOjE3MzA0MzM3Njd9.lDtBaWO4y_SCjWRLWJZn-ai8z0h6hMj6ZSdHnBPaXEI'
 function postData(problemRequest:ProblemData, problemCode:SolutionInfo) {
   axios.post(`${baseUrl}/boards`, problemRequest, {
     headers:{
